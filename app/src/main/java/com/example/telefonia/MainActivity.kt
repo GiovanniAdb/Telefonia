@@ -1,16 +1,25 @@
 package com.example.telefonia
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
-import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.*
+import com.example.myapp.AutoReplyService
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
-
+    private lateinit var phoneInput: EditText
+    private lateinit var replyInput: EditText
+    private lateinit var Savebutton: Button
+    private lateinit var startButton: Button
+    private lateinit var stopButton: Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -33,7 +42,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (state == TelephonyManager.CALL_STATE_RINGING && phoneNumber == savedPhoneNumber) {
                     // Si el número que está llamando coincide con el número guardado, enviar respuesta automática
-                    val replyIntent = Intent(applicationContext, AutoReplyService::class.java)
+                    val replyIntent = Intent(this@MainActivity, AutoReplyService::class.java)
                     replyIntent.putExtra("replyText", savedReplyText)
                     startService(replyIntent)
                 }
@@ -41,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Configurar los botones de la interfaz de usuario
-        saveButton.setOnClickListener {
+        Savebutton.setOnClickListener {
             saveConfig()
         }
 
@@ -94,10 +103,14 @@ class MainActivity : AppCompatActivity() {
     private fun stopService() {
         // Detener el listener de llamadas telefónicas
         val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
 
         // Detener el servicio de respuesta automática
         val intent = Intent(this, AutoReplyService::class.java)
         stopService(intent)
     }
+}
+
+class AutoReplyService {
+
 }
