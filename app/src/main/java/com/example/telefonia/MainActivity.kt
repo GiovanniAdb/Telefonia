@@ -10,7 +10,6 @@ import android.telephony.TelephonyManager
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import com.example.myapp.AutoReplyService
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -20,6 +19,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var Savebutton: Button
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
+    private var phoneStateListener: PhoneStateListener? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
