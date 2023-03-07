@@ -1,114 +1,103 @@
 package com.example.telefonia
 
-import android.Manifest
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
-import android.widget.Button
-import android.widget.EditText
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import com.google.ar.core.Config
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var editTextNumber: EditText
-    private lateinit var editTextMessage: EditText
-    private lateinit var buttonSave: Button
-    private lateinit var buttonStart: Button
-    private lateinit var buttonStop: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Obtener referencias a los elementos de la interfaz de usuario
-        editTextNumber = findViewById(R.id.editTextNumber)
-        editTextMessage = findViewById(R.id.editTextMessage)
-        buttonSave = findViewById(R.id.buttonSave)
-        buttonStart = findViewById(R.id.buttonStart)
-        buttonStop = findViewById(R.id.buttonStop)
+        // Obtener los valores guardados en las SharedPreferences
+        val sharedPref =
+            getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        val savedPhoneNumber = sharedPref.getString(getString(R.string.phone_number_key), null)
+        val savedReplyText = sharedPref.getString(getString(R.string.reply_text_key), null)
 
-        // Configurar el evento onClick del botón "Guardar"
-        buttonSave.setOnClickListener {
-            Config.saveConfig(this, editTextNumber.text.toString(), editTextMessage.text.toString())
-        }
+        // Asignar los valores guardados a las vistas
+        phoneInput.setText(savedPhoneNumber)
+        replyInput.setText(savedReplyText)
 
-        // Configurar el evento onClick del botón "Iniciar servicio"
-        buttonStart.setOnClickListener {
-            // Verificar si se tienen los permisos necesarios
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_PHONE_STATE
-                ) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.SEND_SMS
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                // Iniciar el servicio de respuesta automática
-                startService()
-            } else {
-                // Solicitar los permisos necesarios
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.SEND_SMS),
-                    0
-                )
+        // Configurar el listener de cambios de estado en llamadas telefónicas
+        val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+        val phoneStateListener = object : PhoneStateListener() {
+            override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                super.onCallStateChanged(state, phoneNumber)
+
+                if (state == TelephonyManager.CALL_STATE_RINGING && phoneNumber == savedPhoneNumber) {
+                    // Si el número que está llamando coincide con el número guardado, enviar respuesta automática
+                    val replyIntent = Intent(applicationContext, AutoReplyService::class.java)
+                    replyIntent.putExtra("replyText", savedReplyText)
+                    startService(replyIntent)
+                }
             }
         }
 
-        // Configurar el evento onClick del botón "Detener servicio"
-        buttonStop.setOnClickListener {
-            // Detener el servicio de respuesta automática
-            stopService()
+        // Configurar los botones de la interfaz de usuario
+        saveButton.setOnClickListener {
+            saveConfig()
         }
 
-        // Cargar la configuración previa
-        val config = Config.loadConfig(this)
-        editTextNumber.setText(config.number)
-        editTextMessage.setText(config.message)
+        startButton.setOnClickListener {
+            startService()
+        }
+
+        stopButton.setOnClickListener {
+            stopService()
+        }
+    }
+
+    private fun saveConfig() {
+        // Obtener los valores de las vistas
+        val phoneNumber = phoneInput.text.toString()
+        val replyText = replyInput.text.toString()
+
+        // Guardar los valores en las SharedPreferences
+        val sharedPref =
+            getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            putString(getString(R.string.phone_number_key), phoneNumber)
+            putString(getString(R.string.reply_text_key), replyText)
+            apply()
+        }
     }
 
     private fun startService() {
-        // Obtener el número y el mensaje de respuesta automática
-        val config = Config.loadConfig(this)
-        val number = config.number
-        val message = config.message
-
-        // Registrar el listener de llamadas telefónicas
+        // Configurar el listener de llamadas telefónicas
         val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
         val phoneStateListener = object : PhoneStateListener() {
-            override fun onCallStateChanged(state: Int, incomingNumber: String) {
-                super.onCallStateChanged(state, incomingNumber)
+            override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                super.onCallStateChanged(state, phoneNumber)
 
-                // Verificar si la llamada es entrante
-                if (state == TelephonyManager.CALL_STATE_RINGING) {
-                    // Verificar si el número entrante coincide con el número configurado
-                    if (incomingNumber == number) {
-                        // Enviar la respuesta automática
-                        SmsSender.sendSms(this@MainActivity, number, message)
-                    }
+                if (state == TelephonyManager.CALL_STATE_RINGING && phoneNumber == phoneInput.text.toString()) {
+                    // Si el número que está llamando coincide con el número ingresado, enviar respuesta automática
+                    val replyIntent = Intent(applicationContext, AutoReplyService::class.java)
+                    replyIntent.putExtra("replyText", replyInput.text.toString())
+                    startService(replyIntent)
                 }
             }
-            // Configurar el listener de llamadas telefónicas
-            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
-
-            // Iniciar el servicio de respuesta automática
-            val intent = Intent(this, AutoReplyService::class.java)
-            startService(intent)
         }
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
+
+        // Iniciar el servicio de respuesta automática
+        val intent = Intent(this, AutoReplyService::class.java)
+        startService(intent)
     }
 
-        private fun stopService() {
-            // Detener el listener de llamadas telefónicas
-            val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-            telephonyManager.listen(null, PhoneStateListener.LISTEN_NONE)
+    private fun stopService() {
+        // Detener el listener de llamadas telefónicas
+        val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
 
-            // Detener el servicio de respuesta automática
-            val intent = Intent(this, AutoReplyService::class.java)
-            stopService(intent)
-        }
+        // Detener el servicio de respuesta automática
+        val intent = Intent(this, AutoReplyService::class.java)
+        stopService(intent)
     }
+}
