@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="buttonStart" type="id" />
+    <item name="buttonSave" type="id" />
+    <item name="buttonStop" type="id" />
+    <item name="editTextMessage" type="id" />
+    <item name="editTextPhone" type="id" />
+    <item name="parent_layout" type="id" />
+</resources>
