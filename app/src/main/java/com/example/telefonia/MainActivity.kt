@@ -64,24 +64,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-        /** Obtener permisos
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)!=
-            PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE),369)
-        }
-
-
-        // Cargar las preferencias guardadas
-        val prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE)
-        val editor = prefs.edit()
-        editor.clear()
-        editor.apply()
-        targetNumber.setText(prefs.getString("targetNumber", ""))
-        autoResponse.setText(prefs.getString("autoResponse", ""))
-
-        Toast.makeText(this, "Num: "+targetNumber.text.toString(), Toast.LENGTH_SHORT).show();
-        Toast.makeText(this, "Text: "+autoResponse.text.toString(), Toast.LENGTH_SHORT).show();
-        //Log.d("esto es el mensaje de texto que se manda", autoResponse.toString())
-        //targetNumber.setText("4171400040")
-        //autoResponse.setText("que onda")
-         */
