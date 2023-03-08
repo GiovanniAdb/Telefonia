@@ -24,11 +24,11 @@ class MainActivity : AppCompatActivity() {
         val editor = prefs.edit()
         editor.clear()
         editor.apply()
-        //targetNumber.setText(prefs.getString("targetNumber", ""))
-        //autoResponse.setText(prefs.getString("autoResponse", ""))
+        targetNumber.setText(prefs.getString("targetNumber", ""))
+        autoResponse.setText(prefs.getString("autoResponse", ""))
 
-        Toast.makeText(this, targetNumber.text.toString(), Toast.LENGTH_SHORT).show();
-        Toast.makeText(this, "---"+autoResponse.text.toString(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Num: "+targetNumber.text.toString(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Text: "+autoResponse.text.toString(), Toast.LENGTH_SHORT).show();
         Log.d("esto es el mensaje de texto que se manda", autoResponse.toString())
         //targetNumber.setText("4171400040")
         //autoResponse.setText("que onda")
